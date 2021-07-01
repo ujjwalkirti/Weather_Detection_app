@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
 import Container from "react-bootstrap/Container";
 import "./App.css";
+require("dotenv").config();
 
 function App() {
 	const [temp, setTemp] = useState([]);
 	const [place, setPlace] = useState("");
-	const [api, setApi] = useState("a32ea6c1497939f2276f1af4a7d6dcaa");
+	const [api, setApi] = useState(`${process.env.REACT_APP_API_KEY}`);
 	const [validated, setValidated] = useState(false);
 	const [error, setError] = useState(false);
-
+	
 	const fetchWeather = () => {
 		axios
 			.get(
@@ -21,6 +22,7 @@ function App() {
 				// handle success
 				setTemp(response.data.main.temp);
 				console.log(response.data);
+				console.log(process.env)
 			})
 			.catch(function (error) {
 				// handle error
@@ -32,8 +34,8 @@ function App() {
 		event.preventDefault();
 
 		if (place !== "") {
-			setValidated(true);
 			fetchWeather();
+			setValidated(true);
 		} else {
 			setError(true);
 		}
