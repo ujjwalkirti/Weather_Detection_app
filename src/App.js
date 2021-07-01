@@ -7,22 +7,21 @@ import "./App.css";
 require("dotenv").config();
 
 function App() {
-	const [temp, setTemp] = useState([]);
+	const [details, setDetails] = useState({});
 	const [place, setPlace] = useState("");
 	const [api, setApi] = useState(`${process.env.REACT_APP_API_KEY}`);
 	const [validated, setValidated] = useState(false);
 	const [error, setError] = useState(false);
-	
-	const fetchWeather = () => {
+
+	const fetchWeather =  () => {
 		axios
 			.get(
 				`http://api.openweathermap.org/data/2.5/weather?q=${place}&appid=${api}`
 			)
 			.then(function (response) {
 				// handle success
-				setTemp(response.data.main.temp);
+				setDetails(response.data.main);
 				console.log(response.data);
-				console.log(process.env)
 			})
 			.catch(function (error) {
 				// handle error
@@ -43,10 +42,18 @@ function App() {
 	if (place !== "" && validated) {
 		return (
 			<Container>
-				<Jumbotron>
+				<Jumbotron className="mt-3">
 					<h1 style={{ textAlign: "center" }}>
-						Temperature of {place} is: {temp} K
+						Temperature of {place} is: {details?.temp} K
 					</h1>
+					<div>
+						<div className="alert alert-warning">
+							Max Temperature: {details?.temp_max} K
+						</div>
+						<div className="alert alert-info">
+							Min Temperature: {details?.temp_min} K
+						</div>
+					</div>
 					<Form className="m-auto w-50">
 						<Button
 							className="btn-warning btn"
@@ -64,7 +71,7 @@ function App() {
 		return (
 			<div className="App">
 				<Container>
-					<Form className="card p-4" onSubmit={handleSubmit}>
+					<Form className="card p-4 mt-3" onSubmit={handleSubmit}>
 						<Form.Group>
 							<Form.Label>Enter the city</Form.Label>
 							<Form.Control
