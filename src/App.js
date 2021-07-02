@@ -12,8 +12,9 @@ function App() {
 	const [api, setApi] = useState(`${process.env.REACT_APP_API_KEY}`);
 	const [validated, setValidated] = useState(false);
 	const [error, setError] = useState(false);
-	const [lat, setLat] = useState([]);
-	const [lon, setLong] = useState([]);
+	const [lat, setLat] = useState("");
+	const [lon, setLong] = useState("");
+	const [locationError, setLocationError] = useState(false);
 
 	const fetchWeather = () => {
 		axios
@@ -43,25 +44,36 @@ function App() {
 	};
 	const detectLocation = async (event) => {
 		event.preventDefault();
-		navigator.geolocation.getCurrentPosition(function (position) {
-			setLat(position.coords.latitude);
-			setLong(position.coords.longitude);
-		});
-		await axios
-			.get(
-				`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${api}`
-			)
-			.then(function (response) {
-				setDetails(response.data.main);
-				console.log(response.data);
-				setValidated(true);
-			})
-			.catch(function (error) {
-				alert(error);
-				setValidated(false);
-			});
+		if (lat === "" || lon === "") {
+			setLocationError(true);
+		} else {
+			await axios
+				.get(
+					`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${api}`
+				)
+				.then(function (response) {
+					setDetails(response.data.main);
+					console.log(response.data);
+					setValidated(true);
+				})
+				.catch(function (error) {
+					alert(error);
+					setValidated(false);
+				});
+		}
 	};
-	if (place !== "" && validated && details?.temp === "undefined") {
+	useEffect(() => {
+		async function fetchCoordinates() {
+			await navigator.geolocation.getCurrentPosition(function (position) {
+				setLat(position.coords.latitude);
+				setLong(position.coords.longitude);
+			});
+		}
+		fetchCoordinates();
+		console.log("Latitude is:", lat);
+		console.log("Longitude is:", lon);
+	}, []);
+	if (place !== "" && validated && typeof details.temp === "undefined") {
 		return (
 			<Container>
 				<div class="text-center">
@@ -71,7 +83,7 @@ function App() {
 				</div>
 			</Container>
 		);
-	} else if (place !== "" && validated) {
+	} else if (place !== "" && validated && typeof details.temp !== "undefined") {
 		return (
 			<Container>
 				<Jumbotron className="mt-3">
@@ -103,6 +115,22 @@ function App() {
 		return (
 			<div className="App">
 				<Container>
+					{(lat === "" || lon === "") && locationError && (
+						<div className="alert alert-danger alert-dismisable fade show mt-4">
+							Sorry, couldnot fetch your Location coordinates!
+							<button
+								type="button"
+								class="close"
+								data-dismiss="alert"
+								aria-label="Close"
+								onClick={() => {
+									setLocationError(false);
+								}}
+							>
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+					)}
 					<Form className="card p-4 mt-3" onSubmit={handleSubmit}>
 						<Form.Group>
 							<Form.Label>Enter the city</Form.Label>
@@ -122,13 +150,16 @@ function App() {
 							get me the weather!
 						</Button>
 					</Form>
-					<Button
-						className="m-auto mt-4 w-50 btn-danger"
-						onClick={detectLocation}
-						type="submit"
-					>
-						Auto-detect the Location!
-					</Button>
+					<div className="d-flex" style={{ marginTop: "30px" }}>
+						<button
+							className="btn m-auto w-50 btn-danger"
+							onClick={detectLocation}
+							type="submit"
+						>
+							Auto-detect the Location!
+						</button>
+					</div>
+
 					<footer className="footer mt-auto py-3">
 						<div className="container">
 							<span className="text-muted">Built by Ujjwal</span>
