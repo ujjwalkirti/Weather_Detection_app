@@ -12,8 +12,10 @@ function App() {
 	const [api, setApi] = useState(`${process.env.REACT_APP_API_KEY}`);
 	const [validated, setValidated] = useState(false);
 	const [error, setError] = useState(false);
+	const [lat, setLat] = useState([]);
+	const [lon, setLong] = useState([]);
 
-	const fetchWeather =  () => {
+	const fetchWeather = () => {
 		axios
 			.get(
 				`http://api.openweathermap.org/data/2.5/weather?q=${place}&appid=${api}`
@@ -39,7 +41,37 @@ function App() {
 			setError(true);
 		}
 	};
-	if (place !== "" && validated) {
+	const detectLocation = async (event) => {
+		event.preventDefault();
+		navigator.geolocation.getCurrentPosition(function (position) {
+			setLat(position.coords.latitude);
+			setLong(position.coords.longitude);
+		});
+		await axios
+			.get(
+				`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${api}`
+			)
+			.then(function (response) {
+				setDetails(response.data.main);
+				console.log(response.data);
+				setValidated(true);
+			})
+			.catch(function (error) {
+				alert(error);
+				setValidated(false);
+			});
+	};
+	if (place !== "" && validated && details?.temp === "undefined") {
+		return (
+			<Container>
+				<div class="text-center">
+					<div class="spinner-border" role="status">
+						<span class="sr-only">Loading...</span>
+					</div>
+				</div>
+			</Container>
+		);
+	} else if (place !== "" && validated) {
 		return (
 			<Container>
 				<Jumbotron className="mt-3">
@@ -90,6 +122,13 @@ function App() {
 							get me the weather!
 						</Button>
 					</Form>
+					<Button
+						className="m-auto mt-4 w-50 btn-danger"
+						onClick={detectLocation}
+						type="submit"
+					>
+						Auto-detect the Location!
+					</Button>
 					<footer className="footer mt-auto py-3">
 						<div className="container">
 							<span className="text-muted">Built by Ujjwal</span>
